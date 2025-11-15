@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "public"."Journal" ADD COLUMN     "dateJournal" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Abonnement {
+  id        Int      @id @default(autoincrement())
+  type      String   // ex: "mensuel", "annuel"
+  prix      Decimal  // montant
+  debut     DateTime
+  fin       DateTime
+
+  // Relation avec User
+  userId    Int   @unique
+  user      User  @relation(fields: [userId], references: [id])
+}
+
+
+model User {
+  id                 Int       @id @default(autoincrement())
+  email              String    @unique
+  password           String
+  firstname          String?
+  lastname           String?
+  role               String?
+  activated          Boolean   @default(true)
+  phone              String?
+
+  // Relations avec journaux (Many-to-Many)
+  journauxLu           Journal[]  @relation("LuRelation")
+  journauxTelecharges  Journal[]  @relation("TelechargeRelation")
+
+  // Relation avec abonnement (1–1)
+  abonnement    Abonnement?
+
+  createdAt          DateTime  @default(now())
+}
+
+model Editeur {
+  id       Int       @id @default(autoincrement())
+  nom      String
+  journals Journal[] // ← relation un-à-plusieurs
+  createdAt DateTime @default(now())
+  // Logos (documents)
+  documents Document[]
+}
+
+model Journal {
+  id                  Int       @id @default(autoincrement())
+  title               String
+  // Contenu rédactionnel (hérité de Newsletter)
+  content             String?
+  // Métadonnées de fichier si applicable
+  filename            String
+  mime                String
+  size                Int
+  url                 String?
+  dateJournal         DateTime  @default(now())
+  
+  // Relation père-fils avec User (Many-to-Many) pour lus / téléchargés
+  usersLu             User[]    @relation("LuRelation")
+  usersTelecharges    User[]    @relation("TelechargeRelation")
+
+  // Relation père-fils avec Editeur
+  editeurId           Int
+  editeur             Editeur   @relation(fields: [editeurId], references: [id])
+  createdAt           DateTime  @default(now())
+
+  // Catégorie (hérité de Newsletter): un journal appartient à une catégorie
+  categorieId         Int
+  categorie           Categorie @relation(fields: [categorieId], references: [id])
+
+  // Documents (PDFs, page de garde) hérités de Newsletter
+  documents           Document[]
+}
+
+// Newsletter fusionné dans Journal
+
+model Categorie {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+
+  // Newsletters dans cette catégorie
+  journals    Journal[]
+}
+
+// Type de document stocké
+enum DocumentKind {
+  NEWSLETTER_PDF       // fichiers PDF d'une newsletter
+  NEWSLETTER_COVER     // page de garde d'une newsletter
+  EDITEUR_LOGO         // logo d'un éditeur
+}
+
+model Document {
+  id         Int           @id @default(autoincrement())
+  kind       DocumentKind
+  url        String        // URL publique/chemin
+  filename   String
+  mime       String
+  size       Int           // en octets
+  createdAt  DateTime      @default(now())
+
+  // Rattachements optionnels
+  journalId   Int?
+  journal     Journal?     @relation(fields: [journalId], references: [id])
+
+  editeurId   Int?
+  editeur     Editeur?     @relation(fields: [editeurId], references: [id])
+}

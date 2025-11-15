@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connexion — Saabal Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/admin/styles.css" />
+    <style>
+      body {
+        background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .login-card {
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 400px;
+      }
+      .login-logo {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+      .login-logo img {
+        height: 48px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="/assets/logo.png" alt="Saabal" />
+      </div>
+      <h1 class="text-2xl font-semibold text-center mb-6">Connexion Admin</h1>
+      <form id="login-form" class="admin-form">
+        <div class="form-field">
+          <label for="email">Email *</label>
+          <input id="email" name="email" type="email" required placeholder="admin@saabal.com" autocomplete="email" />
+        </div>
+        <div class="form-field">
+          <label for="password">Mot de passe *</label>
+          <input id="password" name="password" type="password" required placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="mt-6">
+          <button type="submit" class="btn w-full">Se connecter</button>
+        </div>
+        <div id="login-status" class="mt-4 text-sm text-center"></div>
+      </form>
+    </div>
+
+    <script src="/admin/login.js" defer></script>
+  </body>
+</html>
+

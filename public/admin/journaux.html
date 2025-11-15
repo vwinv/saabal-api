@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Journaux — Saabal Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/admin/styles.css" />
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <div class="min-h-screen grid grid-cols-[240px_1fr]">
+      <aside class="bg-black text-white p-4 flex flex-col gap-4">
+        <div class="flex items-center gap-2 font-semibold text-lg">
+          <img src="/assets/logo.png" alt="Saabal" class="h-6" />
+          <span>Saabal Admin</span>
+        </div>
+        <nav class="flex flex-col gap-2 text-sm">
+          <a href="/admin" class="px-3 py-2 rounded hover:bg-white/10">Dashboard</a>
+          <a href="/admin/utilisateurs.html" class="px-3 py-2 rounded hover:bg-white/10">Utilisateurs</a>
+          <a href="/admin/abonnements.html" class="px-3 py-2 rounded hover:bg-white/10">Abonnements</a>
+          <a href="/admin/editeurs.html" class="px-3 py-2 rounded hover:bg-white/10">Éditeurs</a>
+          <a href="/admin/journaux.html" class="px-3 py-2 rounded bg-white/10 hover:bg-white/20">Journaux</a>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-white/10">
+          <button onclick="logout()" class="w-full px-3 py-2 rounded hover:bg-white/10 text-sm text-left">
+            Déconnexion
+          </button>
+        </div>
+      </aside>
+      <main class="p-6">
+        <header class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-semibold">Gestion des journaux</h1>
+          <div class="flex items-center gap-2">
+            <a href="/admin" class="text-sm text-gray-600 hover:text-black">← Retour au dashboard</a>
+          </div>
+        </header>
+
+        <!-- Section Catégories -->
+        <section class="mb-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Formulaire d'ajout de catégorie -->
+            <section class="card">
+              <h2 class="text-lg font-semibold mb-4">Ajouter une catégorie</h2>
+              <form id="category-form" class="admin-form">
+                <div class="form-field">
+                  <label for="category-name">Nom de la catégorie *</label>
+                  <input id="category-name" name="name" type="text" required placeholder="ex: Actualités, Sport, Culture..." />
+                </div>
+                <div class="flex items-center gap-3 mt-4">
+                  <button type="submit" class="btn">Enregistrer</button>
+                  <span id="category-status" class="text-sm text-gray-600"></span>
+                </div>
+              </form>
+            </section>
+
+            <!-- Liste des catégories -->
+            <section class="card">
+              <h2 class="text-lg font-semibold mb-4">Catégories existantes</h2>
+              <div id="categories-list" class="space-y-2">
+                <p class="text-gray-500 text-sm">Chargement...</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Formulaire d'ajout -->
+          <section class="card">
+            <h2 class="text-lg font-semibold mb-4" id="form-title">Ajouter un journal</h2>
+            <form id="journal-form" class="admin-form">
+              <div class="form-field">
+                <label for="journal-title">Titre *</label>
+                <input id="journal-title" name="title" type="text" required placeholder="ex: Journal du 15 janvier 2025" />
+              </div>
+              <div class="form-field">
+                <label for="journal-content">Lien vers le document</label>
+                <input id="journal-content" name="content" type="url" placeholder="https://..." />
+              </div>
+              <div class="form-field">
+                <label for="journal-editeur">Éditeur *</label>
+                <select id="journal-editeur" name="editeurId" required>
+                  <option value="">Sélectionner un éditeur</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="journal-categorie">Catégorie *</label>
+                <select id="journal-categorie" name="categorieId" required>
+                  <option value="">Sélectionner une catégorie</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="journal-date">Date du journal</label>
+                <input id="journal-date" name="dateJournal" type="date" />
+              </div>
+              <div class="flex items-center gap-3 mt-4">
+                <button type="submit" class="btn" id="submit-btn">Enregistrer</button>
+                <button type="button" class="btn-cancel hidden" id="cancel-btn">Annuler</button>
+                <span id="journal-status" class="text-sm text-gray-600"></span>
+              </div>
+            </form>
+          </section>
+
+          <!-- Liste des journaux -->
+          <section class="card">
+            <h2 class="text-lg font-semibold mb-4">Liste des journaux</h2>
+            <div id="journals-list" class="space-y-2">
+              <p class="text-gray-500 text-sm">Chargement...</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="/admin/auth.js" defer></script>
+    <script src="/admin/journaux.js" defer></script>
+  </body>
+</html>
+
