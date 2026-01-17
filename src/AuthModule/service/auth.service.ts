@@ -17,6 +17,20 @@ export class AuthService {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) throw new UnauthorizedException('Invalid credentials');
 
+    // Récupérer le dernier abonnement valide de l'utilisateur
+    const now = new Date();
+    const abonnement = await this.prisma.abonnement.findFirst({
+      where: {
+        userId: user.id,
+        fin: {
+          gte: now, // Date de fin >= maintenant (abonnement valide)
+        },
+      },
+      orderBy: {
+        fin: 'desc', // Le plus récent
+      },
+    });
+
     const payload = { sub: user.id, email: user.email };
 
     const accessToken = await this.jwtService.signAsync(payload);
@@ -25,7 +39,15 @@ export class AuthService {
       secret: process.env.JWT_REFRESH_SECRET,
     });
 
-    return { data: { user: user, access_token: accessToken, refresh_token: refreshToken }, message: 'Login Successfull' };
+    return { 
+      data: { 
+        user: user, 
+        abonnement: abonnement || null,
+        access_token: accessToken, 
+        refresh_token: refreshToken 
+      }, 
+      message: 'Login Successfull' 
+    };
   }
 
   async refresh(refreshToken: string) {
