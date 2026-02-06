@@ -20,13 +20,13 @@ async function createAdmin() {
       console.log(`   ID: ${existingUser.id}`);
       console.log(`   Rôle actuel: ${existingUser.role || 'aucun'}`);
       
-      // Mettre à jour le rôle si ce n'est pas ADMIN
-      if (existingUser.role !== 'ADMIN' && existingUser.role !== 'admin') {
+      // Mettre à jour le rôle si ce n'est pas SUPER_ADMIN
+      if (existingUser.role !== 'SUPER_ADMIN' && existingUser.role !== 'super-admin') {
         await prisma.user.update({
           where: { id: existingUser.id },
-          data: { role: 'ADMIN' },
+          data: { role: 'SUPER_ADMIN' },
         });
-        console.log(`✅ Rôle mis à jour vers ADMIN pour l'utilisateur ${email}`);
+        console.log(`✅ Rôle mis à jour vers SUPER_ADMIN pour l'utilisateur ${email}`);
       }
       return;
     }
@@ -34,19 +34,19 @@ async function createAdmin() {
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Créer l'utilisateur ADMIN
+    // Créer l'utilisateur SUPER_ADMIN
     const admin = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstname,
         lastname,
-        role: 'ADMIN',
+        role: 'SUPER_ADMIN',
         activated: true,
       },
     });
 
-    console.log('✅ Utilisateur ADMIN créé avec succès !');
+    console.log('✅ Utilisateur SUPER_ADMIN créé avec succès !');
     console.log(`   ID: ${admin.id}`);
     console.log(`   Email: ${admin.email}`);
     console.log(`   Nom: ${admin.firstname} ${admin.lastname}`);

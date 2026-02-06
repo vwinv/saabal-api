@@ -8,8 +8,11 @@ import { AuthModule } from './AuthModule/auth.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { JwtModule } from '@nestjs/jwt';
 import { AbonnementModule } from './AbonnementModule/abonnement.module';
+import { OffreModule } from './OffreModule/offre.module.js';
 import { NewsletterModule } from './NewsletterModule/newsletter.module.js';
 import { EditorModule } from './EditorModule/editor.module.js';
+import { LectureModule } from './LectureModule/lecture.module.js';
+import { PaymentModule } from './PaymentModule/payment.module.js';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -26,8 +29,11 @@ import { join } from 'path';
     AuthModule,
     UserModule,
     AbonnementModule,
+    PaymentModule,
+    OffreModule,
     NewsletterModule,
     EditorModule,
+    LectureModule,
     PrismaModule, // optionnel ici si utilisé ailleurs
     JwtModule.register({ secret: 'SECRET_KEY' }),
   ],

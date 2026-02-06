@@ -13,12 +13,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Offre {
+  id          Int    @id @default(autoincrement())
+  nom         String // nom de l'offre
+  prix        Decimal
+  description String?
+  abonnements Abonnement[]
+  createdAt   DateTime @default(now())
+}
+
 model Abonnement {
   id        Int      @id @default(autoincrement())
-  type      String   // ex: "mensuel", "annuel"
-  prix      Decimal  // montant
+  prix      Decimal  // montant (peut venir de l'offre)
   debut     DateTime
   fin       DateTime
+
+  // Relation avec Offre (remplace l'ancien champ type)
+  offreId   Int?
+  offre     Offre?   @relation(fields: [offreId], references: [id], onDelete: SetNull)
 
   // Relation avec User
   userId    Int   @unique
@@ -36,9 +48,16 @@ model User {
   activated          Boolean   @default(true)
   phone              String?
 
+  // Lien optionnel vers un éditeur (admin d'éditeur)
+  editeurId          Int?
+  editeur            Editeur?  @relation(fields: [editeurId], references: [id])
+
   // Relations avec journaux (Many-to-Many)
   journauxLu           Journal[]  @relation("LuRelation")
   journauxTelecharges  Journal[]  @relation("TelechargeRelation")
+
+  // Lectures (progression de lecture : journal + page)
+  lectures             Lecture[]
 
   // Relation avec abonnement (1–1)
   abonnement    Abonnement?
@@ -53,11 +72,15 @@ model Editeur {
   createdAt DateTime @default(now())
   // Logos (documents)
   documents Document[]
+
+  // Utilisateurs admins liés à cet éditeur
+  users    User[]
 }
 
 model Journal {
   id                  Int       @id @default(autoincrement())
   title               String
+  grosTitre           String?
   // Contenu rédactionnel (hérité de Newsletter)
   content             String?
   // Métadonnées de fichier si applicable
@@ -82,6 +105,21 @@ model Journal {
 
   // Documents (PDFs, page de garde) hérités de Newsletter
   documents           Document[]
+
+  // Lectures utilisateurs (progression par user)
+  lectures            Lecture[]
+}
+
+model Lecture {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journalId  Int
+  journal    Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  page       Int      @default(1)  // page actuelle
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, journalId])
 }
 
 // Newsletter fusionné dans Journal

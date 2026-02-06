@@ -9,6 +9,25 @@
     <link rel="stylesheet" href="/admin/styles.css" />
   </head>
   <body class="bg-gray-50 text-gray-900">
+    <!-- Barre rouge pour ADMIN (cachée par défaut, affichée via JS) -->
+    <div id="admin-top-bar" class="hidden bg-red-600 text-white px-6 py-3 flex items-center justify-between shadow-md m-4 rounded-lg">
+      <div class="flex items-center gap-3">
+        <img src="/assets/logo.png" alt="Saabal" class="h-6" />
+        <span class="font-semibold" id="editor-name-display">Éditeur</span>
+      </div>
+      <div class="relative">
+        <button id="profile-menu-btn" class="flex items-center gap-2 hover:bg-red-700 px-3 py-2 rounded transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </button>
+        <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+          <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="min-h-screen grid grid-cols-[240px_1fr]">
       <aside class="bg-black text-white p-4 flex flex-col gap-4">
         <div class="flex items-center gap-2 font-semibold text-lg">
@@ -40,7 +59,7 @@
         <section class="mb-6">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Formulaire d'ajout de catégorie -->
-            <section class="card">
+            <section class="card" id="category-form-section">
               <h2 class="text-lg font-semibold mb-4">Ajouter une catégorie</h2>
               <form id="category-form" class="admin-form">
                 <div class="form-field">
@@ -55,7 +74,7 @@
             </section>
 
             <!-- Liste des catégories -->
-            <section class="card">
+            <section class="card" id="categories-list-section">
               <h2 class="text-lg font-semibold mb-4">Catégories existantes</h2>
               <div id="categories-list" class="space-y-2">
                 <p class="text-gray-500 text-sm">Chargement...</p>
@@ -64,14 +83,30 @@
           </div>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="journals-main-section">
+          <!-- Liste des journaux -->
+          <section class="card" id="journals-list-section">
+            <h2 class="text-lg font-semibold mb-4">Liste des journaux</h2>
+            <div id="journals-list" class="space-y-2">
+              <p class="text-gray-500 text-sm">Chargement...</p>
+            </div>
+          </section>
           <!-- Formulaire d'ajout -->
-          <section class="card">
+          <section class="card" id="journal-form-section">
             <h2 class="text-lg font-semibold mb-4" id="form-title">Ajouter un journal</h2>
             <form id="journal-form" class="admin-form">
               <div class="form-field">
                 <label for="journal-title">Titre *</label>
                 <input id="journal-title" name="title" type="text" required placeholder="ex: Journal du 15 janvier 2025" />
+              </div>
+              <div class="form-field">
+                <label for="journal-gros-titre">Gros titre</label>
+                <textarea
+                  id="journal-gros-titre"
+                  name="grosTitre"
+                  rows="3"
+                  placeholder="Texte du gros titre mis en avant"
+                ></textarea>
               </div>
               <div class="form-field">
                 <label for="journal-content">Lien vers le document</label>
@@ -101,13 +136,6 @@
             </form>
           </section>
 
-          <!-- Liste des journaux -->
-          <section class="card">
-            <h2 class="text-lg font-semibold mb-4">Liste des journaux</h2>
-            <div id="journals-list" class="space-y-2">
-              <p class="text-gray-500 text-sm">Chargement...</p>
-            </div>
-          </section>
         </div>
       </main>
     </div>

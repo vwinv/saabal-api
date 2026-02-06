@@ -7,7 +7,7 @@ async function loadEditors() {
   const listEl = document.getElementById('editors-list');
   try {
     const result = await fetchAPI('/editors');
-    const editors = result.data || [];
+    const editors = (result && result.data) || [];
 
     if (editors.length === 0) {
       listEl.innerHTML = '<p class="text-gray-500 text-sm">Aucun éditeur pour le moment.</p>';
@@ -78,14 +78,14 @@ function cancelEdit() {
 
 // Delete editor
 async function deleteEditor(id, nom) {
-  if (!confirm(`Êtes-vous sûr de vouloir supprimer l'éditeur "${nom}" ?`)) {
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer l'éditeur "${nom}" ?\n\nCette action supprimera également l'administrateur lié et le logo associé.`)) {
     return;
   }
 
   try {
     await fetchAPI(`/editors/${id}`, { method: 'DELETE' });
     await loadEditors();
-    showStatus('Éditeur supprimé avec succès', 'success');
+    showStatus('Éditeur, admin associé et logo supprimés avec succès', 'success');
   } catch (err) {
     console.error(err);
     showStatus(`Erreur lors de la suppression: ${err.message}`, 'error');
@@ -145,18 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
           body: formData,
         });
 
+        const result = await res.json().catch(() => ({}));
         if (!res.ok) {
           if (res.status === 401) {
             localStorage.removeItem('jwt_token');
             window.location.href = '/admin/login.html';
             throw new Error('Session expirée');
           }
-          const errorText = await res.text().catch(() => 'Erreur inconnue');
-          throw new Error(`HTTP ${res.status}: ${errorText}`);
+          throw new Error(result.message || `HTTP ${res.status}`);
         }
+        if (result.success === false) throw new Error(result.message || 'Erreur serveur');
 
-        const result = await res.json();
-        showStatus('Éditeur créé avec succès', 'success');
+        const statusEl = document.getElementById('editor-status');
+        statusEl.textContent = result.message || 'Éditeur créé avec succès.';
+        statusEl.style.color = '#0a7a0a';
+
         form.reset();
       }
       await loadEditors();

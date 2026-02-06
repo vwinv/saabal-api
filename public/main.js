@@ -49,6 +49,55 @@ async function loadEditors(){
 
 loadEditors();
 
+// Chargement dynamique des offres depuis l'API /offres
+async function loadOffres() {
+  const container = document.querySelector('.pricing-grid');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/offres', {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Erreur chargement offres');
+    const body = await res.json();
+    const offres = body.data || [];
+
+    if (!offres.length) {
+      container.innerHTML =
+        '<p class="text-gray-500 text-center col-span-full">Aucune offre disponible pour le moment.</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    offres.forEach((offre, index) => {
+      const p = offre.prix;
+      const prix =
+        typeof p === 'object' && p != null ? parseFloat(p.toString()) : parseFloat(p);
+      const prixStr = Number.isNaN(prix) ? '—' : `${prix.toFixed(0)} FCFA`;
+
+      const card = document.createElement('div');
+      card.className =
+        'price-card' + (index === 1 ? ' featured' : '');
+      card.innerHTML = `
+        <h3>${offre.nom}</h3>
+        <p class="price">${prixStr}</p>
+        ${offre.description ? `<p class="text-sm text-gray-600 mt-1">${offre.description}</p>` : ''}
+      `;
+      container.appendChild(card);
+    });
+
+    // Ajouter les nouvelles cartes au système d'animation
+    const priceCards = document.querySelectorAll('.price-card');
+    priceCards.forEach((card) => observer.observe(card));
+  } catch (e) {
+    console.warn('Erreur lors du chargement des offres:', e);
+    container.innerHTML =
+      '<p class="text-red-500 text-center col-span-full">Erreur lors du chargement des offres.</p>';
+  }
+}
+
+loadOffres();
+
 // Animation observer pour les éléments
 const observerOptions = {
   threshold: 0.1,
@@ -68,9 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Observer les cartes features (déjà présentes)
   const featureCards = document.querySelectorAll('.features .card');
   featureCards.forEach(card => observer.observe(card));
-  
-  const priceCards = document.querySelectorAll('.price-card');
-  priceCards.forEach(card => observer.observe(card));
   
   // Observer les éditeurs après leur création
   setTimeout(() => {

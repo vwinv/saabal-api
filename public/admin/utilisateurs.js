@@ -1,34 +1,52 @@
 // Uses fetchAPI from auth.js (loaded before this script)
 
-// Load users and separate them into admins and clients
+// Load users and separate them into:
+// - Admins (ADMIN / SUPER_ADMIN)
+// - Clients (utilisateurs qui ont un abonnement)
 async function loadUsers() {
   const adminsBody = document.getElementById('admins-table-body');
   const clientsBody = document.getElementById('clients-table-body');
 
   try {
-    const result = await fetchAPI('/users/all');
-    const users = result.data || [];
+    const usersResult = await fetchAPI('/users/all');
+    const users = (usersResult && usersResult.data) || [];
 
-    const admins = users.filter(user => user.role === 'ADMIN' || user.role === 'admin');
-    const clients = users.filter(user => user.role !== 'ADMIN' && user.role !== 'admin' && user.role !== null);
+    // Récupérer les abonnements pour identifier les clients abonnés
+    const aboResult = await fetchAPI('/abonnements');
+    const abonnements = (aboResult && aboResult.data) || [];
+    const subscribedUserIds = new Set(abonnements.map((abo) => abo.userId));
+
+    const isAdminRole = (role) =>
+      role === 'ADMIN' ||
+      role === 'admin' ||
+      role === 'SUPER_ADMIN' ||
+      role === 'super-admin';
+
+    const admins = users.filter((user) => isAdminRole(user.role));
+    const clients = users.filter(
+      (user) => !isAdminRole(user.role) && subscribedUserIds.has(user.id),
+    );
 
     // Render admins
     if (admins.length === 0) {
-      adminsBody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">Aucun administrateur</td></tr>';
+      adminsBody.innerHTML =
+        '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">Aucun administrateur</td></tr>';
     } else {
-      adminsBody.innerHTML = admins.map(user => renderUserRow(user)).join('');
+      adminsBody.innerHTML = admins.map((user) => renderUserRow(user)).join('');
     }
 
-    // Render clients
+    // Render clients (uniquement ceux qui sont abonnés)
     if (clients.length === 0) {
-      clientsBody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">Aucun client</td></tr>';
+      clientsBody.innerHTML =
+        '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">Aucun client abonné</td></tr>';
     } else {
-      clientsBody.innerHTML = clients.map(user => renderUserRow(user)).join('');
+      clientsBody.innerHTML = clients.map((user) => renderUserRow(user)).join('');
     }
   } catch (err) {
     console.error(err);
-    adminsBody.innerHTML = `<tr><td colspan="8" class="px-4 py-4 text-center text-red-500">Erreur: ${err.message}</td></tr>`;
-    clientsBody.innerHTML = `<tr><td colspan="8" class="px-4 py-4 text-center text-red-500">Erreur: ${err.message}</td></tr>`;
+    const errorRow = `<tr><td colspan="8" class="px-4 py-4 text-center text-red-500">Erreur: ${err.message}</td></tr>`;
+    adminsBody.innerHTML = errorRow;
+    clientsBody.innerHTML = errorRow;
   }
 }
 
@@ -82,7 +100,7 @@ function escapeHtml(text) {
 async function editUser(id) {
   try {
     const result = await fetchAPI(`/users/${id}`);
-    const user = result.data?.user || result.data;
+    const user = (result && result.data) ? (result.data.user ?? result.data) : null;
 
     if (!user) {
       showStatus('Utilisateur introuvable', 'error');

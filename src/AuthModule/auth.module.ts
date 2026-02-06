@@ -5,6 +5,7 @@ import { PrismaModule } from '../prisma/prisma.module.js';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategy/jwt.strategy.js';
+import { JwtAuthGuard } from './guard/jwt-auth.guard.js';
 import { RolesGuard } from './guard/roles.guard.js';
 
 @Module({
@@ -12,13 +13,13 @@ import { RolesGuard } from './guard/roles.guard.js';
     PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET ?? 'CHANGE_ME_DEV_SECRET',
       signOptions: { expiresIn: '30m' },
     }),
   ],
-  providers: [AuthService, JwtStrategy, RolesGuard],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
   controllers: [AuthController],
-  exports: [RolesGuard],
+  exports: [JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}
 

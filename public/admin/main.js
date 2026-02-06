@@ -1,11 +1,18 @@
 // Uses fetchAPI from auth.js (loaded before this script)
 
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 async function loadStats(){
   try{
     // Load users count
     try {
       const usersRes = await fetchAPI('/users/all');
-      const users = usersRes.data || [];
+      const users = (usersRes && usersRes.data) || [];
       document.getElementById('stat-users').textContent = users.length;
     } catch (err) {
       console.warn('Erreur chargement utilisateurs:', err);
@@ -15,10 +22,11 @@ async function loadStats(){
     // Load abonnements total amount
     try {
       const abonnementsRes = await fetchAPI('/abonnements');
-      const abonnements = abonnementsRes.data || [];
+      const abonnements = (abonnementsRes && abonnementsRes.data) || [];
       const totalAmount = abonnements.reduce((sum, abo) => {
-        const prix = parseFloat(abo.prix) || 0;
-        return sum + prix;
+        const p = abo.prix;
+        const prix = typeof p === 'object' && p != null ? parseFloat(p.toString()) : parseFloat(p);
+        return sum + (Number.isNaN(prix) ? 0 : prix);
       }, 0);
       document.getElementById('stat-subs').textContent = totalAmount.toFixed(2) + ' FCFA';
     } catch (err) {
@@ -29,21 +37,45 @@ async function loadStats(){
     // Load journals count
     try {
       const journalsRes = await fetchAPI('/newsletters');
-      const journals = journalsRes.data || [];
+      const journals = (journalsRes && journalsRes.data) || [];
       document.getElementById('stat-news').textContent = journals.length;
     } catch (err) {
       console.warn('Erreur chargement journaux:', err);
       document.getElementById('stat-news').textContent = '—';
     }
 
-    // Load most popular subscription type
+    // Load most popular offre
     try {
-      const popularTypeRes = await fetchAPI('/abonnements/stats/most-popular-type');
-      const popularType = popularTypeRes.data || {};
-      document.getElementById('stat-popular-type').textContent = popularType.type ? `${popularType.type} (${popularType.count})` : '—';
+      const popularOffreRes = await fetchAPI('/abonnements/stats/most-popular-offre');
+      const popularOffre = (popularOffreRes && popularOffreRes.data) || {};
+      const offreName = popularOffre.offre ? popularOffre.offre.nom : null;
+      document.getElementById('stat-popular-offre').textContent = offreName ? `${offreName} (${popularOffre.count})` : '—';
     } catch (err) {
-      console.warn('Erreur chargement type populaire:', err);
-      document.getElementById('stat-popular-type').textContent = '—';
+      console.warn('Erreur chargement offre populaire:', err);
+      document.getElementById('stat-popular-offre').textContent = '—';
+    }
+
+    // Load offres list (table Offre)
+    try {
+      const offresRes = await fetchAPI('/offres');
+      const offres = (offresRes && offresRes.data) || [];
+      const tbody = document.getElementById('offres-table-body');
+      if (tbody) {
+        if (offres.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Aucune offre</td></tr>';
+        } else {
+          tbody.innerHTML = offres.map(o => {
+            const prix = typeof o.prix === 'object' && o.prix != null ? o.prix.toString() : o.prix;
+            const prixStr = prix ? parseFloat(prix).toFixed(2) + ' FCFA' : '—';
+            const desc = (o.description || '').trim() || '—';
+            return `<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-xs font-medium">${escapeHtml(o.nom)}</td><td class="px-4 py-3 text-xs">${prixStr}</td><td class="px-4 py-3 text-xs text-gray-600">${escapeHtml(desc)}</td></tr>`;
+          }).join('');
+        }
+      }
+    } catch (err) {
+      console.warn('Erreur chargement offres:', err);
+      const tbody = document.getElementById('offres-table-body');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-red-500">Erreur chargement</td></tr>';
     }
   }catch(e){
     console.warn(e);
@@ -58,7 +90,7 @@ async function loadCharts() {
     // Load users by month
     try {
       const usersStatsRes = await fetchAPI('/users/stats/by-month');
-      const usersStats = usersStatsRes.data || [];
+      const usersStats = (usersStatsRes && usersStatsRes.data) || [];
       
       const ctxUsers = document.getElementById('users-chart');
       if (ctxUsers && usersChart) {
@@ -106,7 +138,7 @@ async function loadCharts() {
     // Load subscriptions by month
     try {
       const subsStatsRes = await fetchAPI('/abonnements/stats/by-month');
-      const subsStats = subsStatsRes.data || [];
+      const subsStats = (subsStatsRes && subsStatsRes.data) || [];
       
       const ctxSubs = document.getElementById('subscriptions-chart');
       if (ctxSubs && subscriptionsChart) {
@@ -165,6 +197,25 @@ async function loadCharts() {
 
 // Load stats when page loads (after auth.js is loaded)
 document.addEventListener('DOMContentLoaded', () => {
+  // Adapter le menu en fonction du rôle
+  try {
+    const raw = localStorage.getItem('user_info');
+    const user = raw ? JSON.parse(raw) : null;
+    const role = user?.role;
+
+    if (role === 'ADMIN' || role === 'admin') {
+      const links = document.querySelectorAll('aside nav a');
+      links.forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (!href.includes('/admin/journaux.html')) {
+          link.style.display = 'none';
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Erreur lors de la lecture du rôle utilisateur :', e);
+  }
+
   loadStats();
   // Wait a bit for Chart.js to be loaded
   setTimeout(() => {
@@ -223,18 +274,17 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
       const result = await res.json().catch(() => ({}));
-      status.textContent = 'Catégorie créée avec succès';
+      if (!res.ok) throw new Error(result.message || 'HTTP ' + res.status);
+      if (result.success === false) throw new Error(result.message || 'Erreur serveur');
+      status.textContent = result.message || 'Catégorie créée avec succès';
       status.style.color = '#0a7a0a';
-      
-      // Refresh category list or update input with new ID if needed
       setTimeout(() => {
         closeModal();
       }, 1500);
     } catch (err) {
       console.warn(err);
-      status.textContent = "Échec de l'enregistrement (API à implémenter)";
+      status.textContent = err.message || "Échec de l'enregistrement";
       status.style.color = '#b00020';
     }
   });

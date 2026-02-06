@@ -50,11 +50,17 @@ async function fetchAPI(url, options = {}) {
       logout();
       throw new Error('Session expirée. Veuillez vous reconnecter.');
     }
-    const errorText = await res.text().catch(() => 'Erreur inconnue');
-    throw new Error(`HTTP ${res.status}: ${errorText}`);
+    // Format API d'erreur : { success: false, data: [], message: "..." }
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.message || `Erreur HTTP ${res.status}`);
   }
 
-  return res.json();
+  const body = await res.json();
+  // Format API : { success: boolean, data: [], message: "" }
+  if (body && body.success === false) {
+    throw new Error(body.message || 'Erreur serveur');
+  }
+  return body;
 }
 
 // Check auth on page load

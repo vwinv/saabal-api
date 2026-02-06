@@ -2,8 +2,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Redirect if already logged in
   const token = localStorage.getItem('jwt_token');
+  const storedUserRaw = localStorage.getItem('user_info');
+  const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+  const storedRole = storedUser?.role;
+
   if (token) {
-    window.location.href = '/admin';
+    // Si c'est un admin d'éditeur, aller directement sur la page Journaux
+    if (storedRole === 'ADMIN' || storedRole === 'admin') {
+      window.location.href = '/admin/journaux.html';
+    } else {
+      window.location.href = '/admin';
+    }
     return;
   }
 
@@ -36,7 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const result = await res.json();
-      
+      // Format API : { success, data, message }
+      if (result && result.success === false) {
+        throw new Error(result.message || 'Email ou mot de passe incorrect');
+      }
+
       // Store token in localStorage
       if (result.data && result.data.access_token) {
         localStorage.setItem('jwt_token', result.data.access_token);
@@ -54,9 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
         statusEl.textContent = 'Connexion réussie, redirection...';
         statusEl.style.color = '#0a7a0a';
 
-        // Redirect to dashboard
+        // Redirect selon le rôle
         setTimeout(() => {
-          window.location.href = '/admin';
+          const user = result.data.user;
+          const role = user?.role;
+          if (role === 'ADMIN' || role === 'admin') {
+            window.location.href = '/admin/journaux.html';
+          } else {
+            window.location.href = '/admin';
+          }
         }, 500);
       } else {
         throw new Error('Token non reçu');

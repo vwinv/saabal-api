@@ -1,9 +1,27 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from '../service/auth.service.js';
+import { JwtAuthGuard } from '../guard/jwt-auth.guard.js';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
+
+  @Post('me/deactivate')
+  @UseGuards(JwtAuthGuard)
+  deactivateMyAccount(@Req() req: { user: { userId: number } }) {
+    return this.authService.deactivateMyAccount(req.user.userId);
+  }
+
+  @Post('register')
+  register(@Body() body: {
+    email: string;
+    password: string;
+    firstname?: string;
+    lastname?: string;
+    phone?: string;
+  }) {
+    return this.authService.register(body);
+  }
 
   @Post('login')
   login(@Body() body: { email: string; password: string }) {

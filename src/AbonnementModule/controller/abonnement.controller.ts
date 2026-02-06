@@ -5,9 +5,10 @@ import { JwtAuthGuard } from '../../AuthModule/guard/jwt-auth.guard.js';
 @Controller('abonnements')
 @UseGuards(JwtAuthGuard)
 export class AbonnementController {
-  constructor(private readonly abonnementService: AbonnementService) {}
+  constructor(private readonly abonnementService: AbonnementService) { }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return this.abonnementService.findAll();
   }
@@ -17,9 +18,9 @@ export class AbonnementController {
     return this.abonnementService.getStatsByMonth();
   }
 
-  @Get('stats/most-popular-type')
-  getMostPopularType() {
-    return this.abonnementService.getMostPopularType();
+  @Get('stats/most-popular-offre')
+  getMostPopularOffre() {
+    return this.abonnementService.getMostPopularOffre();
   }
 
   @Get(':userId')
@@ -28,10 +29,10 @@ export class AbonnementController {
   }
 
   @Post()
-  create(@Body() body: { userId: number; type: string; prix: string; debut: string; fin: string }) {
-    return this.abonnementService.createOrReplace({
+  create(@Body() body: { userId: number; offreId?: number | null; prix: string; debut: string; fin: string }) {
+    return this.abonnementService.create({
       userId: body.userId,
-      type: body.type,
+      offreId: body.offreId ?? null,
       prix: body.prix,
       debut: new Date(body.debut),
       fin: new Date(body.fin),
@@ -41,10 +42,10 @@ export class AbonnementController {
   @Put(':userId')
   update(
     @Param('userId') userId: string,
-    @Body() body: { type?: string; prix?: string; debut?: string; fin?: string },
+    @Body() body: { offreId?: number | null; prix?: string; debut?: string; fin?: string },
   ) {
     return this.abonnementService.update(Number(userId), {
-      type: body.type,
+      offreId: body.offreId,
       prix: body.prix,
       debut: body.debut ? new Date(body.debut) : undefined,
       fin: body.fin ? new Date(body.fin) : undefined,
