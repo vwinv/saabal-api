@@ -1,6 +1,9 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service.js';
 import { apiSuccess } from '../../common/api-response.js';
+
+const PDF_FOLDER = 'saabal/journaux';
 
 type CreateInput = {
   title: string;
@@ -30,7 +33,10 @@ type UpdateInput = {
 
 @Injectable()
 export class NewsletterService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
 
   private async getUserContext(userId: number) {
     const user = await this.prisma.user.findUnique({
@@ -41,6 +47,57 @@ export class NewsletterService {
       throw new ForbiddenException('Utilisateur introuvable');
     }
     return user;
+  }
+
+  async createWithPdf(
+    input: {
+      title: string;
+      grosTitre?: string;
+      editeurId: number;
+      categorieId: number;
+      dateJournal?: string;
+    },
+    pdf: { buffer: Buffer; mimetype: string; originalname?: string; size?: number },
+    currentUserId: number,
+  ) {
+    const uploadResult = await this.cloudinary.uploadBuffer(
+      { buffer: pdf.buffer, mimetype: pdf.mimetype, originalname: pdf.originalname },
+      PDF_FOLDER,
+      'raw',
+    );
+    const content = uploadResult.secure_url;
+    return this.create(
+      {
+        title: input.title,
+        grosTitre: input.grosTitre,
+        content,
+        filename: pdf.originalname || 'journal.pdf',
+        mime: pdf.mimetype || 'application/pdf',
+        size: pdf.size || 0,
+        editeurId: input.editeurId,
+        categorieId: input.categorieId,
+        dateJournal: input.dateJournal ? new Date(input.dateJournal) : undefined,
+      },
+      currentUserId,
+    );
+  }
+
+  async updateWithPdf(
+    id: number,
+    updateData: UpdateInput,
+    pdf: { buffer: Buffer; mimetype: string; originalname?: string; size?: number },
+    currentUserId: number,
+  ) {
+    const uploadResult = await this.cloudinary.uploadBuffer(
+      { buffer: pdf.buffer, mimetype: pdf.mimetype, originalname: pdf.originalname },
+      PDF_FOLDER,
+      'raw',
+    );
+    updateData.content = uploadResult.secure_url;
+    updateData.filename = pdf.originalname || 'journal.pdf';
+    updateData.mime = pdf.mimetype || 'application/pdf';
+    updateData.size = pdf.size || 0;
+    return this.update({ ...updateData, id }, currentUserId);
   }
 
   async create(input: CreateInput, currentUserId: number) {

@@ -32,8 +32,8 @@ model Abonnement {
   offreId   Int?
   offre     Offre?   @relation(fields: [offreId], references: [id], onDelete: SetNull)
 
-  // Relation avec User
-  userId    Int   @unique
+  // Relation avec User (un user peut avoir plusieurs abonnements, ex. réabonnements)
+  userId    Int
   user      User  @relation(fields: [userId], references: [id])
 }
 
@@ -59,8 +59,8 @@ model User {
   // Lectures (progression de lecture : journal + page)
   lectures             Lecture[]
 
-  // Relation avec abonnement (1–1)
-  abonnement    Abonnement?
+  // Relation avec abonnements (1–n) : historique des abonnements, un seul "valide" à la fois (fin >= now)
+  abonnements   Abonnement[]
 
   createdAt          DateTime  @default(now())
 }

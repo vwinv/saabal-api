@@ -21,10 +21,13 @@ type UpdateInput = {
 export class AbonnementService {
   constructor(private readonly prisma: PrismaService) { }
 
+  /** Retourne l'abonnement valide (fin >= now) le plus récent pour l'utilisateur, ou null. */
   async getByUserId(userId: number) {
-    const abonnement = await this.prisma.abonnement.findUnique({
-      where: { userId },
-      include: { offre: true } as any, // Fix TypeScript error, use 'as any' or adjust your Prisma schema/types
+    const now = new Date();
+    const abonnement = await this.prisma.abonnement.findFirst({
+      where: { userId, fin: { gte: now } },
+      orderBy: { fin: 'desc' },
+      include: { offre: true } as any,
     });
     if (!abonnement) return apiSuccess(null, '');
     return apiSuccess(abonnement, '');
@@ -46,11 +49,16 @@ export class AbonnementService {
     return apiSuccess(abonnement, 'Abonnement enregistré');
   }
 
+  /** Met à jour l'abonnement valide (fin >= now) le plus récent pour l'utilisateur. */
   async update(userId: number, input: UpdateInput) {
-    const exists = await this.prisma.abonnement.findUnique({ where: { userId } });
+    const now = new Date();
+    const exists = await this.prisma.abonnement.findFirst({
+      where: { userId, fin: { gte: now } },
+      orderBy: { fin: 'desc' },
+    });
     if (!exists) throw new NotFoundException({ message: "Abonnement introuvable pour l'utilisateur" });
     const abonnement = await this.prisma.abonnement.update({
-      where: { userId },
+      where: { id: exists.id },
       data: {
         ...('offreId' in input ? { offreId: input.offreId } : {}),
         ...('prix' in input ? { prix: input.prix as any } : {}),
@@ -61,10 +69,15 @@ export class AbonnementService {
     return apiSuccess(abonnement, 'Abonnement mis à jour');
   }
 
+  /** Supprime l'abonnement valide (fin >= now) le plus récent pour l'utilisateur. */
   async deleteByUserId(userId: number) {
-    const exists = await this.prisma.abonnement.findUnique({ where: { userId } });
+    const now = new Date();
+    const exists = await this.prisma.abonnement.findFirst({
+      where: { userId, fin: { gte: now } },
+      orderBy: { fin: 'desc' },
+    });
     if (!exists) throw new NotFoundException({ message: "Abonnement introuvable pour l'utilisateur" });
-    await this.prisma.abonnement.delete({ where: { userId } });
+    await this.prisma.abonnement.delete({ where: { id: exists.id } });
     return apiSuccess(null, 'Abonnement supprimé');
   }
 

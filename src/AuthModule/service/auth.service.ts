@@ -30,6 +30,15 @@ export class AuthService {
         phone: body.phone ?? null,
       },
     });
+    const now = new Date();
+    const abonnement = await this.prisma.abonnement.findFirst({
+      where: {
+        userId: user.id,
+        fin: { gte: now },
+      },
+      orderBy: { fin: 'desc' },
+    });
+
     const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = await this.jwtService.signAsync(payload, {
@@ -39,6 +48,7 @@ export class AuthService {
     return apiSuccess(
       {
         user: { id: user.id, email: user.email, firstname: user.firstname, lastname: user.lastname, phone: user.phone, role: user.role },
+        abonnement: abonnement ?? null,
         access_token: accessToken,
         refresh_token: refreshToken,
       },

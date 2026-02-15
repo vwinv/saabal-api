@@ -187,7 +187,8 @@ async function editJournal(id) {
     if (grosTitreEl) {
       grosTitreEl.value = journal.grosTitre || '';
     }
-    document.getElementById('journal-content').value = journal.content || '';
+    const pdfInput = document.getElementById('journal-pdf');
+    if (pdfInput) pdfInput.value = '';
     document.getElementById('journal-editeur').value = journal.editeurId || '';
     document.getElementById('journal-categorie').value = journal.categorieId || '';
 
@@ -415,40 +416,49 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const statusEl = document.getElementById('journal-status');
+    const pdfInput = document.getElementById('journal-pdf');
+    const hasPdf = pdfInput && pdfInput.files && pdfInput.files.length > 0;
+
+    if (!editingId && !hasPdf) {
+      showStatus('Veuillez sélectionner un fichier PDF.', 'error');
+      return;
+    }
+
     statusEl.textContent = 'Envoi en cours...';
     statusEl.style.color = '#666';
 
     try {
       const formData = new FormData(form);
-      const data = {
-        title: formData.get('title'),
-        grosTitre: formData.get('grosTitre') || undefined,
-        content: formData.get('content') || undefined,
-        filename: 'document.pdf', // Valeur par défaut
-        mime: 'application/pdf', // Valeur par défaut
-        size: 0, // Valeur par défaut
-        editeurId: Number(formData.get('editeurId')),
-        categorieId: Number(formData.get('categorieId')),
-        dateJournal: formData.get('dateJournal') ? new Date(formData.get('dateJournal') + 'T00:00:00').toISOString() : undefined,
-      };
-
-      if (editingId) {
-        // Update
-        await fetchAPI(`/newsletters/${editingId}`, {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        });
-        showStatus('Journal modifié avec succès', 'success');
-        cancelEdit();
-      } else {
-        // Create
-        await fetchAPI('/newsletters', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
-        showStatus('Journal créé avec succès', 'success');
-        form.reset();
+      const token = getToken();
+      if (!token) {
+        requireAuth();
+        throw new Error('Token JWT requis');
       }
+
+      const url = editingId ? `/newsletters/${editingId}` : '/newsletters';
+      const res = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          throw new Error('Session expirée. Veuillez vous reconnecter.');
+        }
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `Erreur HTTP ${res.status}`);
+      }
+
+      const body = await res.json();
+      if (body && body.success === false) {
+        throw new Error(body.message || 'Erreur serveur');
+      }
+
+      showStatus(editingId ? 'Journal modifié avec succès' : 'Journal créé avec succès', 'success');
+      cancelEdit();
+      form.reset();
       await loadJournals();
     } catch (err) {
       console.error(err);

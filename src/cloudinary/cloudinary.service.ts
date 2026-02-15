@@ -14,6 +14,7 @@ export class CloudinaryService {
   async uploadBuffer(
     file: { buffer: Buffer; mimetype: string; originalname?: string },
     folder?: string,
+    resourceType: 'auto' | 'image' | 'raw' = 'auto',
   ): Promise<UploadApiResponse> {
     if (!file?.buffer) {
       throw new InternalServerErrorException('Fichier invalide pour l’upload Cloudinary');
@@ -23,7 +24,7 @@ export class CloudinaryService {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder,
-          resource_type: 'auto',
+          resource_type: resourceType,
           use_filename: true,
           unique_filename: true,
         },
