@@ -156,3 +156,12 @@ model Document {
   editeurId   Int?
   editeur     Editeur?     @relation(fields: [editeurId], references: [id])
 }
+
+model Publicite {
+  id         Int      @id @default(autoincrement())
+  titre      String
+  description String?
+  imageUrl   String
+  actif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}

@@ -332,22 +332,29 @@ export class NewsletterService {
   }
 
   /** Liste des journaux par catégorie, sans authentification (route publique). */
-  async listByCategoriePublic(categorieId: number) {
+  async listByCategoriePublic(categorieId: number, q?: string) {
+    const where: any = {};
 
-    if (categorieId == 0) {
-      const items = await this.prisma.journal.findMany({
-        include: { editeur: true, categorie: true },
-        orderBy: { dateJournal: 'desc' },
-      });
-      return apiSuccess(items, '');
-    } else {
-      const items = await this.prisma.journal.findMany({
-        where: { categorieId },
-        include: { editeur: true, categorie: true },
-        orderBy: { dateJournal: 'desc' },
-      });
-      return apiSuccess(items, '');
+    // Filtre catégorie : 0 => toutes catégories
+    if (categorieId !== 0) {
+      where.categorieId = categorieId;
     }
+
+    // Filtre mot-clé sur title / grosTitre (optionnel)
+    const search = q?.trim();
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { grosTitre: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const items = await this.prisma.journal.findMany({
+      where,
+      include: { editeur: true, categorie: true },
+      orderBy: { dateJournal: 'desc' },
+    });
+    return apiSuccess(items, '');
   }
 }
 

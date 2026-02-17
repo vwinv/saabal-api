@@ -151,8 +151,11 @@ export class NewsletterController {
 
   @Get('by-category')
   @Public()
-  byCategory(@Query('categorieId') categorieId: string) {
-    return this.service.listByCategoriePublic(Number(categorieId));
+  byCategory(
+    @Query('categorieId') categorieId: string,
+    @Query('q') q?: string,
+  ) {
+    return this.service.listByCategoriePublic(Number(categorieId), q);
   }
 
   @Get('by-day')

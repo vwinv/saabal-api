@@ -12,6 +12,7 @@ import { OffreModule } from './OffreModule/offre.module.js';
 import { NewsletterModule } from './NewsletterModule/newsletter.module.js';
 import { EditorModule } from './EditorModule/editor.module.js';
 import { LectureModule } from './LectureModule/lecture.module.js';
+import { PubliciteModule } from './PubliciteModule/publicite.module';
 import { PaymentModule } from './PaymentModule/payment.module.js';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -34,6 +35,7 @@ import { join } from 'path';
     NewsletterModule,
     EditorModule,
     LectureModule,
+    PubliciteModule,
     PrismaModule, // optionnel ici si utilisé ailleurs
     JwtModule.register({ secret: 'SECRET_KEY' }),
   ],
