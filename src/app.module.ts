@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AdminController } from './admin.controller';
 import { AppService } from './app.service';
@@ -19,6 +20,10 @@ import { join } from 'path';
 
 @Module({
   imports: [
+    // Charge automatiquement le fichier .env et rend ConfigService global
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'public'),
     }),

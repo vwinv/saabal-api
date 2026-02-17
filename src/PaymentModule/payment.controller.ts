@@ -8,32 +8,34 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   /**
-   * Crée une facture PayDunya pour une offre donnée.
+   * Initialise un paiement PayTech pour une offre donnée.
    * Utilisateur doit être authentifié (on récupère son id via le token).
    * Body: { offreId: number }
+   *
+   * Réponse: { success: true, data: { token, redirect_url } }
    */
-  @Post('checkout')
+  @Post('paytech/init')
   @UseGuards(JwtAuthGuard)
-  createCheckout(
+  initPaytech(
     @Body() body: { offreId: number },
     @Req() req: { user: { userId: number } },
   ) {
     const userId = req.user.userId;
-    return this.paymentService.createCheckout({
+    return this.paymentService.createPaytechCheckout({
       userId,
       offreId: Number(body.offreId),
     });
   }
 
   /**
-   * Endpoint de callback / webhook PayDunya.
-   * Doit être configuré dans le dashboard PayDunya comme callback_url.
-   * Public car appelé par PayDunya.
+   * Endpoint IPN / webhook PayTech.
+   * À configurer comme ipn_url dans la requête request-payment.
+   * Public car appelé directement par PayTech.
    */
-  @Post('paydunya-callback')
+  @Post('paytech/ipn')
   @Public()
-  handleCallback(@Body() body: any) {
-    return this.paymentService.handleCallback(body);
+  handlePaytechIpn(@Body() body: any) {
+    return this.paymentService.handlePaytechIpn(body);
   }
 }
 
